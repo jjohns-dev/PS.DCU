@@ -26,8 +26,8 @@
     PrivateData          = @{
         PSData = @{
             Tags       = @('Dell', 'DCU', 'CommandUpdate', 'Drivers', 'BIOS', 'Firmware', 'Windows')
-            LicenseUri = 'https://github.com/johnsarie27/PS.DCU/blob/main/LICENSE'
-            ProjectUri = 'https://github.com/johnsarie27/PS.DCU'
+            LicenseUri = 'https://github.com/jjohns-dev/PS.DCU/blob/main/LICENSE'
+            ProjectUri = 'https://github.com/jjohns-dev/PS.DCU'
         }
     }
 }
