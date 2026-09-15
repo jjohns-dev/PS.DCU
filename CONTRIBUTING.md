@@ -19,7 +19,7 @@ Thanks for your interest in improving PS.DCU.
 
 ## Build and test
 
-The build pipeline mirrors the [`SecurityTools`](https://github.com/johnsarie27/SecurityTools) module:
+The build pipeline mirrors the [`SecurityTools`](https://github.com/jjohns-dev/SecurityTools) module:
 
 ```powershell
 # One-time: install build dependencies (Pester, psake, PSScriptAnalyzer)

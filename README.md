@@ -1,7 +1,7 @@
 # PS.DCU
 
-[![validate](https://github.com/johnsarie27/PS.DCU/actions/workflows/validate.yml/badge.svg)](https://github.com/johnsarie27/PS.DCU/actions/workflows/validate.yml)
-[![release](https://github.com/johnsarie27/PS.DCU/actions/workflows/release.yml/badge.svg)](https://github.com/johnsarie27/PS.DCU/actions/workflows/release.yml)
+[![ci](https://github.com/jjohns-dev/PS.DCU/actions/workflows/ci.yml/badge.svg)](https://github.com/jjohns-dev/PS.DCU/actions/workflows/ci.yml)
+[![release](https://github.com/jjohns-dev/PS.DCU/actions/workflows/release.yml/badge.svg)](https://github.com/jjohns-dev/PS.DCU/actions/workflows/release.yml)
 
 PowerShell module that wraps the Dell Command Update CLI (`dcu-cli.exe`).
 
