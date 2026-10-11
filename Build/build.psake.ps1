@@ -1,6 +1,6 @@
 # ==============================================================================
 # Filename: build.psake.ps1
-# Version:  0.1.0 | Updated: 2026-05-20
+# Version:  0.1.1 | Updated: 2026-10-11
 # Author:   johnsarie27
 # ==============================================================================
 
@@ -146,8 +146,10 @@ Task 'Test' -depends 'ImportStagingModule' {
 
     $TestResults = Invoke-Pester -Configuration $PesterConfig
 
-    if ($TestResults.FailedCount -gt 0) {
-        Write-Error -Message ('Failed [{0}] tests, build failed' -f $TestResults.FailedCount) -ErrorAction Stop
+    # Fail build on any non-passing result. Discovery errors attach to the
+    # container rather than a test, leaving FailedCount at 0.
+    if ($TestResults.Result -ne 'Passed') {
+        Write-Error -Message ("Pester result '{0}' with [{1}] failed test(s), build failed" -f $TestResults.Result, $TestResults.FailedCount) -ErrorAction Stop
     }
 }
 
