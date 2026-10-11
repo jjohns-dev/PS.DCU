@@ -7,7 +7,7 @@
         }
     }
 
-    Pester           = '5.7.1'
+    Pester           = '6.2.0'
     psake            = '4.9.1'
     PSScriptAnalyzer = '1.24.0'
 }

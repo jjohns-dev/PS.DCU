@@ -1,6 +1,6 @@
 @{
     RootModule           = 'PS.DCU.psm1'
-    ModuleVersion        = '0.1.0'
+    ModuleVersion        = '0.1.1'
     GUID                 = 'ae1aef27-57be-4124-8756-0db1affe094c'
     Author               = 'johnsarie27'
     CompanyName          = 'Unknown'

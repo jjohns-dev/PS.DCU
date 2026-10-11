@@ -1,6 +1,6 @@
 # ==============================================================================
 # Filename: Help.Tests.ps1
-# Version:  0.1.0 | Updated: 2026-05-20
+# Version:  0.1.1 | Updated: 2026-10-11
 # Author:   johnsarie27
 # ==============================================================================
 
@@ -14,8 +14,9 @@ BeforeDiscovery {
     }
     Import-Module -Name $manifestPath -Force -ErrorAction Stop
 
+    # Names only, not CommandInfo objects: CommandInfo in -ForEach hangs Pester 6.0.0 (fixed by 6.2.0).
     $script:helpTestCases = (Get-Command -Module $moduleName -CommandType Function) | ForEach-Object -Process {
-        @{ Name = $_.Name; Command = $_ }
+        @{ Name = $_.Name }
     }
 }
 

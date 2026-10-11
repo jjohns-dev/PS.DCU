@@ -11,6 +11,10 @@ PowerShell module that wraps the Dell Command Update CLI (`dcu-cli.exe`).
 - [Dell Command Update](https://www.dell.com/support/kbdoc/en-us/000177325/dell-command-update) installed on the local host
 - Administrator rights for `Install-DCUUpdate` and `Set-DCUConfiguration`
 
+The test suite requires PowerShell 7.4+ (Pester 6 does not support Windows
+PowerShell), so CI exercises 7.4+ only. Windows PowerShell 5.1 is still expected
+to work, but is no longer verified.
+
 ## Install
 
 From the repo root, after building:
