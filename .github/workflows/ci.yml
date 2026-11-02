@@ -12,7 +12,7 @@ jobs:
   validate:
     uses: jjohns-dev/pwsh-module-ci/.github/workflows/ci.yml@v1
     with:
-      os-matrix: '["ubuntu-latest"]'
+      os-matrix: '["windows-latest"]'
     permissions:
       contents: read
       checks: write
