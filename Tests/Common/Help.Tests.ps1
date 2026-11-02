@@ -1,6 +1,6 @@
 # ==============================================================================
 # Filename: Help.Tests.ps1
-# Version:  0.1.1 | Updated: 2026-10-11
+# Version:  0.1.2 | Updated: 2026-11-02
 # Author:   johnsarie27
 # ==============================================================================
 
@@ -47,6 +47,14 @@ Describe 'Comment-based help on <Name>' -ForEach $script:helpTestCases {
 
         foreach ($p in $declared) {
             $documented | Should -Contain $p -Because ('Parameter [{0}] on [{1}] must have a .PARAMETER help entry' -f $p, $Name)
+        }
+
+        # AST, not Get-Help: Get-Help drops a .PARAMETER naming no real parameter, so this could never fail.
+        $helpContent = if ($command.ScriptBlock) { $command.ScriptBlock.Ast.GetHelpContent() }
+        $helpParameterNames = @($helpContent.Parameters.Keys | Where-Object -FilterScript { $_ })
+
+        foreach ($p in $helpParameterNames) {
+            $command.Parameters.Keys | Should -Contain $p -Because ('.PARAMETER [{0}] on [{1}] names a parameter the command does not declare' -f $p, $Name)
         }
     }
 }

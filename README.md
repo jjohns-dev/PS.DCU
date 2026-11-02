@@ -68,7 +68,7 @@ git push origin v0.1.0
 
 This triggers [.github/workflows/release.yml](.github/workflows/release.yml), which stages the module, runs PSScriptAnalyzer and Pester, builds the zip via `CreateBuildArtifact`, and publishes a GitHub Release with auto-generated notes and the artifact attached.
 
-Pull requests are validated by [.github/workflows/validate.yml](.github/workflows/validate.yml) (Init → Stage → Analyze → Test).
+Pull requests are validated by [.github/workflows/ci.yml](.github/workflows/ci.yml) (Init → Stage → Analyze → Test).
 
 ## License
 
