@@ -27,7 +27,7 @@ Context for an AI agent (or a human working alongside one) to work productively 
 
 ## CI is Windows-only, deliberately
 
-`ci.yml` passes `os-matrix: '["windows-latest"]'` rather than the fleet default of ubuntu, windows and macos. The module wraps a Dell utility it only looks for under Windows install paths, so running it on another OS asserts nothing. Do not "restore" the default matrix.
+`ci.yml` passes `os-matrix: '["windows-latest"]'` rather than the fleet default of ubuntu, windows and macos. The module only runs on Windows (it looks for `dcu-cli.exe` only under Windows install paths), so CI matches the target platform. The suite is currently metadata-only (help, manifest and style checks) and exercises no Windows-coupled code on any OS; that gap is tracked in #20. Do not "restore" the default matrix.
 
 ## The required check is pinned in a ruleset
 
@@ -38,4 +38,5 @@ That context name comes from `os-matrix`. **Changing `os-matrix` renames the req
 ## Gotchas that have bitten here
 
 - **`Tests/Common/Help.Tests.ps1`'s parameter check loops inside a single `It`, on purpose.** `Describe -ForEach` runs once per exported command, but `It 'documents every parameter'` gathers the parameter list at run time and loops with `foreach` inside one `It`. Nothing per-parameter is bound at discovery, so it cannot hit the discovery-binding defect fixed elsewhere in the fleet. Do not "modernise" it to a per-parameter `It -ForEach`. Background: #16.
+- **In `Help.Tests.ps1`, help-documented parameter names come from the AST; everything else comes from `Get-Help`. This is deliberate.** `Get-Help` silently drops a `.PARAMETER` block that names no real parameter, so checking help names against declared parameters via `Get-Help` compares a list with the filter that produced it and can never fail. The stale-help check therefore reads `$command.ScriptBlock.Ast.GetHelpContent().Parameters.Keys` (uppercased; `Should -Contain` is case-insensitive). Do not "tidy" it to `Get-Help`. Mutation-proved in #16 by adding a bogus `.PARAMETER` block.
 - **PowerShell Gallery 403 during dependency resolution.** Seen once, 2026-11-02, PR #17 on ubuntu: `Install-PSResource` failed with `Response status code does not indicate success: 403 (Forbidden)` on the gallery lookup for Pester 6.2.0. `Find-PSResource` for the same version succeeded from a workstation, and re-running the failed job passed. Cause unconfirmed. If it recurs, record it here before re-running.
