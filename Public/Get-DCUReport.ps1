@@ -9,8 +9,6 @@ function Get-DCUReport {
     .PARAMETER Path
         Path to an XML report file or to a directory containing reports. When omitted,
         the default DCU report directory is used.
-    .PARAMETER BogusParameter
-        Mutation probe.
     .INPUTS
         System.String.
     .OUTPUTS
