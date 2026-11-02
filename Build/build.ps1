@@ -39,31 +39,30 @@ Write-Output -InputObject ('{0}STARTED TASKS: {1}{0}' -f $nl, ($TaskList -join '
 Write-Output -InputObject ('{0}PowerShell Version Information:' -f $nl)
 $PSVersionTable
 
-# RESOLVE DEPENDENCIES VIA PSDEPEND
+# RESOLVE DEPENDENCIES VIA PSRESOURCEGET
 if ($PSBoundParameters.Keys -contains 'ResolveDependency') {
-    Get-PackageProvider -Name 'NuGet' -ForceBootstrap | Out-Null
+    $dependencyConfigPath = Join-Path -Path $PSScriptRoot -ChildPath 'depend.psd1'
+    Write-Output -InputObject ('Checking / resolving module dependencies from [{0}]...' -f $dependencyConfigPath)
 
-    if (-not (Get-Module -Name 'PSDepend' -ListAvailable)) {
-        Write-Output -InputObject ('{0}PSDepend is not yet installed...installing PSDepend now...' -f $nl)
-        Install-Module -Name 'PSDepend' -Scope 'CurrentUser' -Force
+    $dependencyData = Import-PowerShellDataFile -Path $dependencyConfigPath
+    $dependencyNames = @($dependencyData.Keys | Where-Object { $_ -ne 'PSDependOptions' })
+    foreach ($name in $dependencyNames) {
+        # TrustRepository: PSGallery registers as untrusted under PSResourceGet, so the install would prompt.
+        $installPSResourceParams = @{
+            Name            = $name
+            Version         = $dependencyData[$name]
+            Repository      = 'PSGallery'
+            TrustRepository = $true
+            Scope           = 'CurrentUser'
+            ErrorAction     = 'Stop'
+        }
+        Install-PSResource @installPSResourceParams
     }
-    else {
-        Write-Output -InputObject ('{0}PSDepend already installed...skipping.' -f $nl)
+
+    # Install-PSResource is silent; list installed versions so the resolved pins are visible in the log.
+    Get-InstalledPSResource -Name $dependencyNames | Sort-Object -Property 'Name', 'Version' | ForEach-Object {
+        Write-Output -InputObject ('Resolved dependency: {0} {1}' -f $_.Name, $_.Version)
     }
-
-    $psdependencyConfigPath = Join-Path -Path $PSScriptRoot -ChildPath 'depend.psd1'
-    Write-Output -InputObject ('Checking / resolving module dependencies from [{0}]...' -f $psdependencyConfigPath)
-
-    Import-Module -Name 'PSDepend'
-
-    $invokePSDependParams = @{
-        Path    = $psdependencyConfigPath
-        Import  = $true
-        Confirm = $false
-        Install = $true
-        Force   = $true
-    }
-    Invoke-PSDepend @invokePSDependParams
 
     $PSBoundParameters.Remove('ResolveDependency') | Out-Null
 }
