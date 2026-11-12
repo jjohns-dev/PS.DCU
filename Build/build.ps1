@@ -1,87 +1,58 @@
 # ==============================================================================
 # Filename: build.ps1
-# Version:  0.1.0 | Updated: 2026-05-20
+# Version:  2.0.0 | Updated: 2026-11-09
 # Author:   johnsarie27
 # ==============================================================================
+<#
+.SYNOPSIS
+    Runs the shared build harness from pwsh-module-ci against this module.
+.DESCRIPTION
+    Identical in every consumer repo; do not edit it here. The canonical copy is
+    templates/Build/build.ps1 in jjohns-dev/pwsh-module-ci.
+    Reads the harness version from this repo's own CI caller, keeps a clone of
+    pwsh-module-ci in a per-user cache at that version, and passes every argument
+    through to the harness. Local runs therefore use the same harness as CI.
+    CI never runs this file: the reusable workflows check out the harness themselves.
+.EXAMPLE
+    ./Build/build.ps1 -ResolveDependency -TaskList 'Init'
+.EXAMPLE
+    ./Build/build.ps1 -TaskList 'Test' -Properties @{ PesterScope = 'All' }
+#>
 
-[CmdletBinding()]
-param (
-    [Parameter()]
-    [ValidateSet(
-        'Default',
-        'Init',
-        'Setup',
-        'CombineFunctionsAndStage',
-        'ImportStagingModule',
-        'Analyze',
-        'Test',
-        'CreateBuildArtifact',
-        'Cleanup'
-    )]
-    [System.String[]] $TaskList = 'Default',
+$ErrorActionPreference = 'Stop'
+$project = Split-Path -Path $PSScriptRoot -Parent
+$harnessUrl = 'https://github.com/jjohns-dev/pwsh-module-ci.git'
+$cache = Join-Path -Path ([System.Environment]::GetFolderPath('LocalApplicationData')) -ChildPath 'pwsh-module-ci'
 
-    [Parameter()]
-    [System.Collections.Hashtable] $Parameters,
+# THE VERSION COMES FROM THIS REPO'S CALLER, SO LOCAL AND CI RUN THE SAME HARNESS
+$callerPath = Join-Path -Path $project -ChildPath '.github' -AdditionalChildPath 'workflows', 'ci.yml'
+$caller = Get-Content -LiteralPath $callerPath -Raw
+if ($caller -notmatch 'jjohns-dev/pwsh-module-ci/\.github/workflows/ci\.yml@(\S+)') {
+    Write-Error -Message ('No jjohns-dev/pwsh-module-ci ci.yml reference found in [{0}].' -f $callerPath) -ErrorAction 'Stop'
+}
+$ref = $Matches[1]
 
-    [Parameter()]
-    [System.Collections.Hashtable] $Properties,
-
-    [Parameter()]
-    [System.Management.Automation.SwitchParameter] $ResolveDependency
-)
-
-Set-StrictMode -Version Latest
-
-$nl = [System.Environment]::NewLine
-
-Write-Output -InputObject ('{0}STARTED TASKS: {1}{0}' -f $nl, ($TaskList -join ','))
-
-Write-Output -InputObject ('{0}PowerShell Version Information:' -f $nl)
-$PSVersionTable
-
-# RESOLVE DEPENDENCIES VIA PSRESOURCEGET
-if ($PSBoundParameters.Keys -contains 'ResolveDependency') {
-    $dependencyConfigPath = Join-Path -Path $PSScriptRoot -ChildPath 'depend.psd1'
-    Write-Output -InputObject ('Checking / resolving module dependencies from [{0}]...' -f $dependencyConfigPath)
-
-    $dependencyData = Import-PowerShellDataFile -Path $dependencyConfigPath
-    $dependencyNames = @($dependencyData.Keys | Where-Object { $_ -ne 'PSDependOptions' })
-    foreach ($name in $dependencyNames) {
-        # TrustRepository: PSGallery registers as untrusted under PSResourceGet, so the install would prompt.
-        $installPSResourceParams = @{
-            Name            = $name
-            Version         = $dependencyData[$name]
-            Repository      = 'PSGallery'
-            TrustRepository = $true
-            Scope           = 'CurrentUser'
-            ErrorAction     = 'Stop'
-        }
-        Install-PSResource @installPSResourceParams
+if (-not (Test-Path -LiteralPath $cache)) {
+    $cloneOutput = git clone --quiet $harnessUrl $cache 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $message = 'Could not clone [{0}] into [{1}]. Nothing was run. git said: {2}' -f $harnessUrl, $cache, ($cloneOutput -join ' ')
+        Write-Error -Message $message -ErrorAction 'Stop'
     }
-
-    # Install-PSResource is silent; list installed versions so the resolved pins are visible in the log.
-    Get-InstalledPSResource -Name $dependencyNames | Sort-Object -Property 'Name', 'Version' | ForEach-Object {
-        Write-Output -InputObject ('Resolved dependency: {0} {1}' -f $_.Name, $_.Version)
-    }
-
-    $PSBoundParameters.Remove('ResolveDependency') | Out-Null
-}
-else {
-    Write-Output -InputObject ('{0}Skipping dependency check...{0}' -f $nl)
 }
 
-# BUILD ENVIRONMENT VARIABLES
-$env:BHProjectPath = $PSScriptRoot | Split-Path -Parent
-$manifestFile = Get-ChildItem -Path $env:BHProjectPath -Filter '*.psd1' | Select-Object -First 1
-$env:BHProjectName = $manifestFile.BaseName
-$env:BHPSModuleManifest = $manifestFile.FullName
-
-# INVOKE PSAKE
-$invokePsakeParams = @{
-    buildFile = Join-Path -Path $env:BHProjectPath -ChildPath 'Build\build.psake.ps1'
-    nologo    = $true
+# A FAILED FETCH MUST STOP THE RUN. UNCHECKED, IT LEAVES THE CACHE AT ITS OLD COMMIT AND THE
+# HARNESS RUNS STALE WITH EXIT 0 (MEASURED 2026-11-09). --force: v1/v2 MOVE ON EVERY RELEASE.
+$fetchOutput = git -C $cache fetch --quiet --tags --force origin 2>&1
+if ($LASTEXITCODE -ne 0) {
+    $message = 'Could not update the harness cache [{0}], so its version cannot be trusted. Nothing was run. git said: {1}' -f $cache, ($fetchOutput -join ' ')
+    Write-Error -Message $message -ErrorAction 'Stop'
 }
-Invoke-psake @invokePsakeParams @PSBoundParameters
 
-Write-Output -InputObject ('{0}FINISHED TASKS: {1}' -f $nl, ($TaskList -join ','))
-exit ( [System.Int32](-not $psake.build_success) )
+$checkoutOutput = git -C $cache checkout --quiet --detach $ref 2>&1
+if ($LASTEXITCODE -ne 0) {
+    $message = 'Could not check out pwsh-module-ci at [{0}] in [{1}]. Nothing was run. git said: {2}' -f $ref, $cache, ($checkoutOutput -join ' ')
+    Write-Error -Message $message -ErrorAction 'Stop'
+}
+
+& (Join-Path -Path $cache -ChildPath 'Build' -AdditionalChildPath 'build.ps1') -ProjectPath $project @args
+exit $LASTEXITCODE

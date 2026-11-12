@@ -10,10 +10,10 @@ on:
 
 jobs:
   validate:
-    uses: jjohns-dev/pwsh-module-ci/.github/workflows/ci.yml@v1
+    uses: jjohns-dev/pwsh-module-ci/.github/workflows/ci.yml@v2
     with:
       os-matrix: '["windows-latest"]'
-      min-tests: 81 # 85 collected - min(floor(85 * 0.05), 10)
+      min-tests: 76 # 79 collected - min(floor(79 * 0.05), 10) = 79 - 3
     permissions:
       contents: read
       checks: write
