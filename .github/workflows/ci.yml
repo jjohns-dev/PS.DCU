@@ -10,7 +10,7 @@ on:
 
 jobs:
   validate:
-    uses: jjohns-dev/pwsh-module-ci/.github/workflows/ci.yml@v2
+    uses: jjohns-dev/pwsh-module-ci/.github/workflows/ci.yml@v2.0.2
     with:
       os-matrix: '["windows-latest"]'
       min-tests: 77 # 81 collected - min(floor(81 * 0.05), 10) = 81 - 4
