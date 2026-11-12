@@ -14,15 +14,15 @@ Context for an AI agent (or a human working alongside one) to work productively 
 | `Private/` | Internal helpers; `Invoke-DCU` launches `dcu-cli.exe`, `Get-DCUExecutable` locates it |
 | `PS.DCU.psm1` | Loader, plus module constants: install paths, report path, exit-code map, export list |
 | `PS.DCU.psd1` | Module manifest |
-| `Tests/Common/` | `Help`, `Manifest` and `Meta` tests; the build collects `Tests/*/*.Tests.ps1` |
-| `Build/` | `build.ps1` -> `build.psake.ps1` (psake), `depend.psd1` pins, PSScriptAnalyzer settings |
-| `.github/workflows/` | `ci.yml`, `pssa-sarif.yml`, `release.yml`, all calling `jjohns-dev/pwsh-module-ci` reusable workflows `@v1` |
+| `Tests/Common/` | `help`, `manifest` and `meta` tests; the build collects `Tests/*/*.tests.ps1` |
+| `Build/` | `build.ps1`, the shim for the shared [`pwsh-module-ci` harness](https://github.com/jjohns-dev/pwsh-module-ci/blob/main/docs/consumer-guide.md) (copied from its template, do not edit) |
+| `.github/workflows/` | `ci.yml`, `pssa-sarif.yml`, `release.yml`, all calling `jjohns-dev/pwsh-module-ci` reusable workflows `@v2` |
 
 ## Working conventions
 
 - Coding standards and the PR checklist are in [CONTRIBUTING.md](CONTRIBUTING.md).
 - Build sequence, as CI runs it: `./Build/build.ps1 -ResolveDependency -TaskList Init`, then `-TaskList CombineFunctionsAndStage`, `Analyze`, `Test`. Pester writes JUnit XML to `Artifacts/Test-Unit_<timestamp>.xml`.
-- `-ResolveDependency` installs each module in `Build/depend.psd1` with `Install-PSResource` at its exact pinned version (CurrentUser scope), skipping the `PSDependOptions` key, then logs one `Resolved dependency: <name> <version>` line per installed version. PSDepend is no longer used; `depend.psd1` keeps its shape.
+- `-ResolveDependency` installs the harness's pinned build tools (Pester, psake, PSScriptAnalyzer) plus any modules in the manifest's `RequiredModules` (none today), then logs one `Resolved dependency: <name> <version>` line per module. See the consumer guide's [Dependencies](https://github.com/jjohns-dev/pwsh-module-ci/blob/main/docs/consumer-guide.md#dependencies) section.
 - Merging: squash only, signed commits required, the remote branch auto-deletes. The required status check is strict, so a PR branch must be up to date with `main` before it can merge.
 
 ## CI is Windows-only, deliberately
@@ -37,7 +37,7 @@ That context name comes from `os-matrix`. **Changing `os-matrix` renames the req
 
 ## Gotchas that have bitten here
 
-- **`Tests/Common/Help.Tests.ps1`'s parameter check loops inside a single `It`, on purpose.** `Describe -ForEach` runs once per exported command, but `It 'documents every parameter'` gathers the parameter list at run time and loops with `foreach` inside one `It`. Nothing per-parameter is bound at discovery, so it cannot hit the discovery-binding defect fixed elsewhere in the fleet. Do not "modernise" it to a per-parameter `It -ForEach`. Background: #16.
-- **In `Help.Tests.ps1`, help-documented parameter names come from the AST; everything else comes from `Get-Help`. This is deliberate.** `Get-Help` silently drops a `.PARAMETER` block that names no real parameter, so checking help names against declared parameters via `Get-Help` compares a list with the filter that produced it and can never fail. The stale-help check therefore reads `$command.ScriptBlock.Ast.GetHelpContent().Parameters.Keys` (uppercased; `Should -Contain` is case-insensitive). Do not "tidy" it to `Get-Help`. Mutation-proved in #21 (run `41481360254`) by adding a bogus `.PARAMETER` block.
+- **`Tests/Common/help.tests.ps1`'s parameter check loops inside a single `It`, on purpose.** `Describe -ForEach` runs once per exported command, but `It 'documents every parameter'` gathers the parameter list at run time and loops with `foreach` inside one `It`. Nothing per-parameter is bound at discovery, so it cannot hit the discovery-binding defect fixed elsewhere in the fleet. Do not "modernise" it to a per-parameter `It -ForEach`. Background: #16.
+- **In `help.tests.ps1`, help-documented parameter names come from the AST; everything else comes from `Get-Help`. This is deliberate.** `Get-Help` silently drops a `.PARAMETER` block that names no real parameter, so checking help names against declared parameters via `Get-Help` compares a list with the filter that produced it and can never fail. The stale-help check therefore reads `$command.ScriptBlock.Ast.GetHelpContent().Parameters.Keys` (uppercased; `Should -Contain` is case-insensitive). Do not "tidy" it to `Get-Help`. Mutation-proved in #21 (run `41481360254`) by adding a bogus `.PARAMETER` block.
 - **The `min-tests` floor does not guard the stale-help assertion.** The floor counts `testcase` nodes, and the assertion added in #21 loops inside the existing `It 'documents every parameter'` without producing a case of its own; the collected count was unchanged by #21. Deleting that assertion would leave the count unchanged and the floor silent. That is the cost of the deliberate run-time loop above, not a defect to restructure away: a green floor means the suite still collects, not that this check is still present.
 - **PowerShell Gallery 403 during dependency resolution.** Seen once, 2026-11-02, PR #17 on ubuntu: `Install-PSResource` failed with `Response status code does not indicate success: 403 (Forbidden)` on the gallery lookup for Pester 6.2.0. `Find-PSResource` for the same version succeeded from a workstation, and re-running the failed job passed. Cause unconfirmed. If it recurs, record it here before re-running.
