@@ -13,7 +13,7 @@ jobs:
     uses: jjohns-dev/pwsh-module-ci/.github/workflows/ci.yml@v2
     with:
       os-matrix: '["windows-latest"]'
-      min-tests: 76 # 79 collected - min(floor(79 * 0.05), 10) = 79 - 3
+      min-tests: 77 # 81 collected - min(floor(81 * 0.05), 10) = 81 - 4
     permissions:
       contents: read
       checks: write
