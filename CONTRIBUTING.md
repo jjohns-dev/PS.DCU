@@ -8,7 +8,7 @@ Thanks for your interest in improving PS.DCU.
 - `Public/` — exported functions, one per file, filename matches function name
 - `Private/` — internal helpers, not exported
 - `Tests/Common/` — Pester tests run by the build pipeline
-- `Build/` — psake build pipeline and dependency manifest
+- `Build/` — `build.ps1`, the shim for the shared [`pwsh-module-ci` harness](https://github.com/jjohns-dev/pwsh-module-ci/blob/main/docs/consumer-guide.md)
 - `docs/` — design notes (not shipped in the published module)
 
 ## Prerequisites
