@@ -40,7 +40,10 @@ Describe 'Comment-based help on <Name>' -ForEach $script:helpTestCases {
 
     It 'documents every parameter' {
         $command = Get-Command -Name $Name
-        $documented = @($script:help.Parameters.Parameter | Select-Object -ExpandProperty Name)
+        # AST, not Get-Help, for both checks: Get-Help synthesizes an entry for a parameter with no .PARAMETER
+        # and drops a .PARAMETER naming no real parameter, so neither check could fail against it.
+        $helpContent = if ($command.ScriptBlock) { $command.ScriptBlock.Ast.GetHelpContent() }
+        $documented = @(if ($helpContent) { $helpContent.Parameters.Keys | Where-Object -FilterScript { $_ } })
         $declared = $command.Parameters.Keys | Where-Object -FilterScript {
             $_ -notin @('Verbose', 'Debug', 'ErrorAction', 'WarningAction', 'InformationAction', 'ErrorVariable', 'WarningVariable', 'InformationVariable', 'OutVariable', 'OutBuffer', 'PipelineVariable', 'WhatIf', 'Confirm', 'ProgressAction')
         }
@@ -49,11 +52,7 @@ Describe 'Comment-based help on <Name>' -ForEach $script:helpTestCases {
             $documented | Should -Contain $p -Because ('Parameter [{0}] on [{1}] must have a .PARAMETER help entry' -f $p, $Name)
         }
 
-        # AST, not Get-Help: Get-Help drops a .PARAMETER naming no real parameter, so this could never fail.
-        $helpContent = if ($command.ScriptBlock) { $command.ScriptBlock.Ast.GetHelpContent() }
-        $helpParameterNames = @($helpContent.Parameters.Keys | Where-Object -FilterScript { $_ })
-
-        foreach ($p in $helpParameterNames) {
+        foreach ($p in $documented) {
             $command.Parameters.Keys | Should -Contain $p -Because ('.PARAMETER [{0}] on [{1}] names a parameter the command does not declare' -f $p, $Name)
         }
     }
