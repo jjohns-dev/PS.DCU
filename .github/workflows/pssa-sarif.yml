@@ -10,7 +10,7 @@ on:
 
 jobs:
   analyze:
-    uses: jjohns-dev/pwsh-module-ci/.github/workflows/pssa-sarif.yml@v2
+    uses: jjohns-dev/pwsh-module-ci/.github/workflows/pssa-sarif.yml@ce0d6e57a3ef0ec03f241a1ededbc6fe0eb8d211 # pwsh-module-ci#77 e2e
     permissions:
       contents: read
       security-events: write
