@@ -14,7 +14,7 @@ Context for an AI agent (or a human working alongside one) to work productively 
 | `Private/` | Internal helpers; `Invoke-DCU` launches `dcu-cli.exe`, `Get-DCUExecutable` locates it |
 | `PS.DCU.psm1` | Loader, plus module constants: install paths, report path, exit-code map, export list |
 | `PS.DCU.psd1` | Module manifest |
-| `Tests/Common/` | `help`, `manifest` and `meta` tests; the build collects `Tests/*/*.tests.ps1` |
+| `Tests/Common/` | `help` tests only; the build collects `Tests/*/*.tests.ps1`. Manifest and encoding checks come from the harness's [shared suites](https://github.com/jjohns-dev/pwsh-module-ci/blob/main/docs/consumer-guide.md#shared-tests) |
 | `Build/` | `build.ps1`, the shim for the shared [`pwsh-module-ci` harness](https://github.com/jjohns-dev/pwsh-module-ci/blob/main/docs/consumer-guide.md) (copied from its template, do not edit), and [`harness.psd1`](https://github.com/jjohns-dev/pwsh-module-ci/blob/main/docs/consumer-guide.md#buildharnesspsd1), whose `PesterStrictMode = $true` runs the tests under `Set-StrictMode -Version Latest` |
 | `.github/workflows/` | `ci.yml`, `pssa-sarif.yml`, `release.yml`, all calling `jjohns-dev/pwsh-module-ci` reusable workflows `@v2` |
 
