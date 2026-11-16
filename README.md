@@ -1,3 +1,4 @@
+> **Archived 2026-11-16.** This module is no longer maintained.
 # PS.DCU
 
 [![ci](https://github.com/jjohns-dev/PS.DCU/actions/workflows/ci.yml/badge.svg)](https://github.com/jjohns-dev/PS.DCU/actions/workflows/ci.yml)
